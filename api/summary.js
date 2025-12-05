@@ -1,28 +1,29 @@
-import OpenAI from "openai";
-
 export default async function handler(req, res) {
+  const { title, description } = req.body;
+
   try {
-    const { title, description, link } = req.body;
+    const text = `${title}. ${description}`;
 
-    const client = new OpenAI({
-      apiKey: process.env.OPENAI_API_KEY
-    });
+    const response = await fetch(
+      "https://api-inference.huggingface.co/models/psyche/hufs-kobart-summarization",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ inputs: text })
+      }
+    );
 
-    const prompt = `
-      아래 뉴스 제목과 내용을 3줄로 요약해줘.
-      제목: ${title}
-      설명: ${description}
-      링크: ${link}
-    `;
+    const data = await response.json();
 
-    const result = await client.chat.completions.create({
-      model: "gpt-3.5-turbo",
-      messages: [{ role: "user", content: prompt }]
-    });
+    let summary = "요약 없음";
+    if (Array.isArray(data) && data[0]?.summary_text) {
+      summary = data[0].summary_text;
+    }
 
-    res.status(200).json({ text: result.choices[0].message.content });
-  } catch (e) {
-    console.error("요약 오류:", e);
-    res.status(500).json({ error: "요약 생성 실패" });
+    res.status(200).json({ text: summary });
+  } catch (err) {
+    res.status(500).json({ text: "요약 실패" });
   }
 }
