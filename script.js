@@ -13,7 +13,7 @@ async function getNews(keyword) {
   try {
     showLoading();
 
-    const res = await fetch("https://webpage-project-gamma.vercel.app/api/news", {
+    const res = await fetch("/api/news", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ keyword })
@@ -27,7 +27,7 @@ async function getNews(keyword) {
 }
 
 async function summarize(title, description, link) {
-  const res = await fetch("https://webpage-project-gamma.vercel.app/api/summary", {
+  const res = await fetch("/api/summary", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ title, description, link })
