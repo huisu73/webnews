@@ -2,11 +2,10 @@ export default async function handler(req, res) {
   try {
     const { title, description } = req.body;
 
-    // 요약 대상 텍스트 구성 (기사 제목 + 설명)
     const textToSummarize = `${title}\n${description}`;
 
     const response = await fetch(
-      "https://api-inference.huggingface.co/models/heegyu/kobart-summarization",
+      "https://api-inference.huggingface.co/models/heegyu/kobart-base-v1-summarization",
       {
         method: "POST",
         headers: {
@@ -15,8 +14,8 @@ export default async function handler(req, res) {
         body: JSON.stringify({
           inputs: textToSummarize,
           parameters: {
-            max_length: 120,
-            min_length: 40,
+            max_length: 80,
+            min_length: 30,
             do_sample: false
           }
         })
@@ -25,7 +24,6 @@ export default async function handler(req, res) {
 
     const result = await response.json();
 
-    // 모델 응답 추출
     const summary =
       result[0]?.summary_text || "요약 생성에 실패했습니다.";
 
