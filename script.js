@@ -26,11 +26,11 @@ async function getNews(keyword) {
   }
 }
 
-async function summarize(title, description, link) {
+async function summarize(title, link) {
   const res = await fetch("/api/summary", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ title, description, link })
+    body: JSON.stringify({ title, link })
   });
 
   return await res.json();
@@ -41,10 +41,9 @@ async function renderNews(items) {
 
   for (const item of items) {
     const cleanTitle = item.title.replace(/<[^>]+>/g, "");
-    const cleanDesc = item.description.replace(/<[^>]+>/g, "");
 
-    // === 요약 생성 ===
-    const summary = await summarize(cleanTitle, cleanDesc, item.link);
+    // description 필요 없음 → 삭제
+    const summary = await summarize(cleanTitle, item.link);
 
     const card = document.createElement("div");
     card.classList.add("card");

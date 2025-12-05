@@ -19,6 +19,6 @@
   },
   "homepage": "https://github.com/huisu73/webnews#readme",
   "dependencies": {
-    "openai": "^6.10.0"
+    "cheerio": "^1.0.0-rc.12"
   }
 }
