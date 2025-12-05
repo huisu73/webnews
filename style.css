@@ -71,3 +71,27 @@ button {
   color: red;
   margin-top: 15px;
 }
+
+.search-container {
+  display: flex;
+  gap: 10px;
+  width: 100%;
+  margin-bottom: 10px;
+}
+
+#searchInput {
+  flex: 1;
+  padding: 12px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+}
+
+#searchBtn {
+  width: 100px;
+  padding: 12px;
+  background: #4a74f5;
+  border: none;
+  border-radius: 8px;
+  color: white;
+  cursor: pointer;
+}
