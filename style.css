@@ -56,8 +56,9 @@ button {
   white-space: normal;
   overflow: visible;
   text-overflow: unset;
+  display: block;
+  line-height: 1.4;
 }
-
 
 .card-summary {
   font-size: 15px;

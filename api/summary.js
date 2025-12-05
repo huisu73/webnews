@@ -1,34 +1,28 @@
 export default async function handler(req, res) {
+  const { title, description } = req.body;
+
   try {
-    const { title, description } = req.body;
+    const text = `${title}\n${description}`;
 
-    const textToSummarize = `${title}\n${description}`;
+    // 무료 한국어 모델 API 엔드포인트 사용
+    const response = await fetch("https://estsoft-openai-api.jejucodingcamp.workers.dev/", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        messages: [
+          { role: "system", content: "다음 내용을 3~4줄로 한국어 요약해줘." },
+          { role: "user", content: text }
+        ]
+      })
+    });
 
-    const response = await fetch(
-      "https://api-inference.huggingface.co/models/heegyu/kobart-base-v1-summarization",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          inputs: textToSummarize,
-          parameters: {
-            max_length: 80,
-            min_length: 30,
-            do_sample: false
-          }
-        })
-      }
-    );
+    const data = await response.json();
 
-    const result = await response.json();
+    res.status(200).json({
+      summary: data.choices?.[0]?.message?.content || ""
+    });
 
-    const summary =
-      result[0]?.summary_text || "요약 생성에 실패했습니다.";
-
-    res.status(200).json({ text: summary });
   } catch (e) {
-    res.status(500).json({ text: "요약 오류: " + e.message });
+    res.status(500).json({ summary: "" });
   }
 }
