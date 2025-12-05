@@ -43,6 +43,10 @@ button {
   background: white;
   box-shadow: 0px 4px 8px rgba(0,0,0,0.1);
   text-align: left;
+
+  /* 🔥 제목 줄바꿈을 방해하는 속성 제거 보장 */
+  white-space: normal;
+  overflow: visible;
 }
 
 .card-title {

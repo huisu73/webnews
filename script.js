@@ -50,7 +50,7 @@ async function renderNews(items) {
 
     card.innerHTML = `
       <div class="card-title">${cleanTitle}</div>
-      <div class="card-summary">${summary.text || "요약 없음"}</div>
+      <div class="card-summary">${summary.summary || summary.text || "요약 없음"}</div>
       <a href="${item.link}" target="_blank" class="card-link">원문 보기</a>
     `;
 
