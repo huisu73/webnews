@@ -1,55 +1,72 @@
-import * as cheerio from "cheerio";
+import cheerio from "cheerio";
 
 export default async function handler(req, res) {
   try {
-    const { title, link } = req.body;
+    const { link, title } = req.body;
 
     if (!link) {
-      return res.status(400).json({ summary: "링크 없음" });
+      return res.status(400).json({ summary: "기사 링크가 없습니다." });
     }
 
-    // 1) 원문 페이지 가져오기
-    const html = await fetch(link).then(r => r.text());
-
-    // 2) cheerio로 본문 텍스트 추출
-    const $ = cheerio.load(html);
-
-    // 네이버 뉴스 본문 선택자
-    let content =
-      $("#dic_area").text().trim() ||           // 새로운 네이버 뉴스(2023 이후)
-      $("#newsct_article").text().trim() ||     // 네이버 새버전
-      $("#articeBody").text().trim() ||         // 구버전
-      $("article").text().trim();               // 최종 fallback
-
-    if (!content || content.length < 50) {
-      content = "기사 본문을 추출하지 못했습니다.";
-    }
-
-    // 3) AI 요약 요청 (Upstage 무료 모델)
-    const response = await fetch("https://api.upstage.ai/v1/solar/chat/completions", {
-      method: "POST",
+    // 1) 원문 HTML 가져오기
+    const response = await fetch(link, {
       headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${process.env.UPSTAGE_API_KEY}`
+        "User-Agent":
+          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36",
       },
-      body: JSON.stringify({
-        model: "solar-KORANI-O1-mini",
-        messages: [
-          {
-            role: "user",
-            content: `다음 뉴스 내용을 3~4줄로 한국어 핵심 요약해줘.\n\n제목: ${title}\n\n내용: ${content}`
-          }
-        ]
-      })
     });
 
-    const data = await response.json();
+    const html = await response.text();
+    const $ = cheerio.load(html);
+
+    // 2) 본문 텍스트 추출 (네이버 기사 구조 모두 대응)
+    let articleText =
+      $("#dic_area").text().trim() ||                   // 네이버 뉴스 PC
+      $(".newsct_article").text().trim() ||             // 네이버 뉴스 개편 버전
+      $("#newsct_article").text().trim() ||             // 또 다른 본문 구조
+      $("article").text().trim() ||                     // 일반 뉴스 사이트
+      $("body").text().trim();                           // 최후 fallback
+
+    // 텍스트 너무 짧으면 요약 불가
+    if (!articleText || articleText.length < 50) {
+      return res.status(200).json({
+        summary: "원문 크롤링 실패 — 요약 불가",
+      });
+    }
+
+    // 3) Upstage 요약 호출
+    const summaryRes = await fetch(
+      "https://api.upstage.ai/v1/solar/chat/completions",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${process.env.UPSTAGE_API_KEY}`,
+        },
+        body: JSON.stringify({
+          model: "solar-KORANI-O1-mini",
+          messages: [
+            {
+              role: "user",
+              content: `다음 기사를 한국어로 3~4줄로 간단하게 요약해줘.
+
+제목: ${title}
+
+본문:
+${articleText}`,
+            },
+          ],
+        }),
+      }
+    );
+
+    const data = await summaryRes.json();
     const aiSummary = data.choices?.[0]?.message?.content || "";
 
-    res.status(200).json({ summary: aiSummary });
-
+    return res.status(200).json({ summary: aiSummary });
   } catch (error) {
-    console.error("요약 실패:", error);
-    res.status(500).json({ summary: "" });
+    return res.status(500).json({
+      summary: "요약 생성 중 오류 발생",
+    });
   }
 }
